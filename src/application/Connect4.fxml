@@ -10,4 +10,5 @@
         <!-- Buttons for the game board will be added here dynamically by the Java code -->
     </GridPane>
     <Button fx:id="resetButton" text="Reset Game" onAction="#resetGame"/>
+    <Button fx:id="toggleSmartButton" text="Turn off Smart AI" onAction="#toggleAISmartMode"/>
 </VBox>

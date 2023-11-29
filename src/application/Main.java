@@ -65,12 +65,10 @@ class GameLogic {
     }
     
     public int[] makeMove(int row, int col, Player player) {
-    	printValidMoves();
     	int[] values = new int[2];
     	values[0] = -1;
     	values[1] = col;
         for (int row1 = getRows() - 1; row1 >= 0; row1--) {
-        	System.out.println(getValidMoves()[row1][col]);
             if (getValidMoves()[row1][col] == 1) { // Find the first valid move in the column from the bottom
                 getBoard()[row1][col] = player == Player.HUMAN ? 1 : 2; // Update the board with the player's move
                 updateValidMoves(); // Don't forget to update the valid moves after making a move
@@ -176,7 +174,7 @@ class GameLogic {
 
 class AIPlayer {
     private GameLogic gameLogic;
-
+    private Boolean smart;
     public AIPlayer(GameLogic gameLogic) {
         this.gameLogic = gameLogic;
     }
@@ -186,25 +184,30 @@ class AIPlayer {
     }
 
     private int[] findBestMove() {
-        // 1. Check for AI winning move
-        int[] winningMove = findWinningMove(2); // Assuming 2 represents AI
-        if (winningMove != null) {
-            return winningMove;
-        }
-
-        // 2. Block human player's winning move
-        int[] blockingMove = findWinningMove(1); // Assuming 1 represents human player
-        if (blockingMove != null) {
-            return blockingMove;
-        }
-
-        // 3. Progress AI's line
-        int[] progressMove = findProgressMove();
-        if (progressMove != null) {
-            return progressMove;
-        }
-
+    	if(getSmart()) {
+	        // 1. Check for AI winning move
+	        int[] winningMove = findWinningMove(2); // Assuming 2 represents AI
+	        if (winningMove != null) {
+	        	System.out.println("Found winner");
+	            return winningMove;
+	        }
+	
+	        // 2. Block user player's winning move
+	        int[] blockingMove = findWinningMove(1); // Assuming 1 represents human player
+	        if (blockingMove != null) {
+	        	System.out.println("blocking a win");
+	            return blockingMove;
+	        }
+	
+	        // 3. Progress AI's 
+	        int[] progressMove = findProgressMove();
+	        if (progressMove != null) {
+	        	System.out.println("progreess");
+	            return progressMove;
+	        }
+    	}
         // 4. Make a random move as a last resort
+        System.out.println("random");
         return findRandomMove();
     }
 
@@ -232,11 +235,57 @@ class AIPlayer {
 
 
     private int[] findProgressMove() {
-        // Logic to find the best move to progress AI's line of chips
-        return null; // Placeholder
+        int player = 2; // Assuming 2 represents AI
+        for (int row = 0; row < gameLogic.getRows(); row++) {
+            for (int col = 0; col < gameLogic.getCols(); col++) {
+                // Check if the cell is valid for a move
+                if ((gameLogic.getBoard()[row][col] == 0) && gameLogic.getValidMoves()[row][col] == 1) {
+                    // Temporarily make a move
+                    int [][] tempBoard = gameLogic.getBoard();
+                    tempBoard[row][col] = player;
+                    gameLogic.setBoard(tempBoard);
+
+                    // Check if this move creates a line of three
+                    if (isProgressMove(row, col, player)) {
+                        tempBoard[row][col] = 0; // Undo the move
+                        gameLogic.setBoard(tempBoard);
+                        return new int[] {row, col};
+                    }
+
+                    tempBoard[row][col] = 0; // Undo the move
+                    gameLogic.setBoard(tempBoard);
+                }
+            }
+        }
+        return null;
     }
+
+    private boolean isProgressMove(int row, int col, int player) {
+        // Check horizontal, vertical, and diagonal lines for two chips and an empty space
+        return checkLineForProgress(row, col, player, 1, 0) || // Horizontal
+               checkLineForProgress(row, col, player, 0, 1) || // Vertical
+               checkLineForProgress(row, col, player, 1, 1) || // Diagonal (down-right)
+               checkLineForProgress(row, col, player, 1, -1);  // Diagonal (down-left)
+    }
+
+    private boolean checkLineForProgress(int row, int col, int player, int dRow, int dCol) {
+        int count = 0;
+        for (int i = -2; i <= 2; i++) {
+            int newRow = row + i * dRow;
+            int newCol = col + i * dCol;
+            if (newRow >= 0 && newRow < gameLogic.getRows() && newCol >= 0 && newCol < gameLogic.getCols()) {
+                if (gameLogic.getBoard()[newRow][newCol] == player) {
+                    count++;
+                } else if (gameLogic.getBoard()[newRow][newCol] != 0) {
+                    return false; // The line is blocked by the opponent
+                }
+            }
+        }
+        return count == 2;
+    }
+
     private int[] findRandomMove() {
-        // Randomly pick an empty cell from the board
+        //randomly pick an empty cell from the board
         List<int[]> emptyCells = new ArrayList<>();
         for (int row = 0; row < gameLogic.getRows(); row++) {
             for (int col = 0; col < gameLogic.getCols(); col++) {
@@ -251,5 +300,19 @@ class AIPlayer {
         }
         return null;
     }
+
+	/**
+	 * @return the smart
+	 */
+	public Boolean getSmart() {
+		return smart;
+	}
+
+	/**
+	 * @param smart the smart to set
+	 */
+	public void setSmart(Boolean smart) {
+		this.smart = smart;
+	}
 }
 
