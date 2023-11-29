@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-	
-<?import javafx.scene.layout.BorderPane?>
-	
-<BorderPane xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.Connect4Controller">
-	<!-- TODO Add Nodes -->
-</BorderPane>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox alignment="CENTER" spacing="20.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.Connect4Controller">
+    <GridPane fx:id="gameGrid" alignment="CENTER" hgap="10.0" vgap="10.0">
+        <!-- Buttons for the game board will be added here dynamically by the Java code -->
+    </GridPane>
+    <Button fx:id="resetButton" text="Reset Game" onAction="#resetGame"/>
+</VBox>
