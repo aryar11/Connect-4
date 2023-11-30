@@ -8,7 +8,10 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
-
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.scene.control.Label;
+import javafx.util.Duration;
 
 public class Connect4Controller {
 
@@ -23,21 +26,23 @@ public class Connect4Controller {
     private Button[][] boardButtons = new Button[ROWS][COLS];
     private GameLogic gameLogic;
     private AIPlayer aiPlayer;
-
+    @FXML
+    private Label titleLabel;
     @FXML
     private void initialize() {
         gameLogic = new GameLogic(ROWS, COLS);
         aiPlayer = new AIPlayer(gameLogic);
         aiPlayer.setSmart(true);
+        animateTitle();
         setupBoard();
     }
 
     private void setupBoard() {
         for (int row = 0; row < ROWS; row++) {
             for (int col = 0; col < COLS; col++) {
-                Circle circle = new Circle(50); // Set the radius as needed
-                circle.setFill(Color.WHITE); // Default color
-                circle.setStroke(Color.BLACK); // Outline color
+                Circle circle = new Circle(50); // set radius
+                circle.setFill(Color.LIGHTGREY);
+                circle.setStroke(Color.BLACK); //outline
 
                 final int finalRow = row;
                 final int finalCol = col;
@@ -100,7 +105,7 @@ public class Connect4Controller {
         gameLogic.reset();
         for (Node node : gameGrid.getChildren()) {
             if (node instanceof Circle) {
-                ((Circle) node).setFill(Color.WHITE); // Reset color to white or another neutral color
+                ((Circle) node).setFill(Color.LIGHTGREY);
             }
         }
         
@@ -115,5 +120,19 @@ public class Connect4Controller {
             toggleSmartButton.setText("AI Smart Mode: ON");
         }
     }
-
+    private void animateTitle() {
+        final Timeline timeline = new Timeline(
+            new KeyFrame(
+                Duration.ZERO,
+                event -> titleLabel.setTextFill(Color.RED)
+            ),
+            new KeyFrame(
+                Duration.seconds(0.5),
+                event -> titleLabel.setTextFill(Color.BLUE)
+            )
+        );
+        timeline.setCycleCount(Timeline.INDEFINITE);
+        timeline.setAutoReverse(true);
+        timeline.play();
+    }
 }

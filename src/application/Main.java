@@ -3,13 +3,10 @@ package application;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 
 public class Main extends Application {
@@ -19,6 +16,7 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         Parent root = FXMLLoader.load(getClass().getResource("Connect4.fxml"));
+        root.setStyle("-fx-background-color: black;"); 
         primaryStage.setTitle("Connect Four");
         primaryStage.setScene(new Scene(root));
         primaryStage.show();
@@ -47,7 +45,7 @@ class GameLogic {
     public void updateValidMoves() {
     	this.setValidMoves (new int[rows][cols]);
         for (int col = 0; col < cols; col++) {
-            for (int row = rows - 1; row >= 0; row--) { // Start from the bottom row
+            for (int row = rows - 1; row >= 0; row--) { //starting from bottom row
                 if (this.board[row][col] == 0) { 
                     this.validMoves[row][col] = 1;                    
                     break; 
@@ -69,14 +67,14 @@ class GameLogic {
     	values[0] = -1;
     	values[1] = col;
         for (int row1 = getRows() - 1; row1 >= 0; row1--) {
-            if (getValidMoves()[row1][col] == 1) { // Find the first valid move in the column from the bottom
-                getBoard()[row1][col] = player == Player.HUMAN ? 1 : 2; // Update the board with the player's move
-                updateValidMoves(); // Don't forget to update the valid moves after making a move
+            if (getValidMoves()[row1][col] == 1) { // find first valid move from bottom
+                getBoard()[row1][col] = player == Player.HUMAN ? 1 : 2; // update the board with the move
+                updateValidMoves(); // update valid moves
                 values[0] = row1;
                 break;
             }
         }
-        return values; // Return false if no valid move is found
+        return values; // if no valid move found
     }
 
 
@@ -113,7 +111,7 @@ class GameLogic {
     }
 
     private boolean checkDiagonalsForWin(int player) {
-        // Check left-to-right diagonals
+        //check left-to-right diagonals
         for (int row = 0; row < getRows() - 3; row++) {
             for (int col = 0; col < getCols() - 3; col++) {
                 if (getBoard()[row][col] == player && 
@@ -124,7 +122,7 @@ class GameLogic {
                 }
             }
         }
-        // Check right-to-left diagonals
+        //check right-to-left diagonals
         for (int row = 0; row < getRows() - 3; row++) {
             for (int col = 3; col < getCols(); col++) {
                 if (getBoard()[row][col] == player && 
@@ -160,13 +158,16 @@ class GameLogic {
 
 	public void setValidMoves(int[][] validMoves) {this.validMoves = validMoves;}
 	
+	/*
+	 * For debugging
+	 */
 	public void printValidMoves() {
 	    System.out.println("Valid Moves:");
 	    for (int[] row : validMoves) {
 	        for (int move : row) {
 	            System.out.print(move + " ");
 	        }
-	        System.out.println(); // Move to the next line after printing each row
+	        System.out.println(); 
 	    }
 	}
 
@@ -186,14 +187,14 @@ class AIPlayer {
     private int[] findBestMove() {
     	if(getSmart()) {
 	        // 1. Check for AI winning move
-	        int[] winningMove = findWinningMove(2); // Assuming 2 represents AI
+	        int[] winningMove = findWinningMove(2); 
 	        if (winningMove != null) {
 	        	System.out.println("Found winner");
 	            return winningMove;
 	        }
 	
 	        // 2. Block user player's winning move
-	        int[] blockingMove = findWinningMove(1); // Assuming 1 represents human player
+	        int[] blockingMove = findWinningMove(1); 
 	        if (blockingMove != null) {
 	        	System.out.println("blocking a win");
 	            return blockingMove;
@@ -206,7 +207,7 @@ class AIPlayer {
 	            return progressMove;
 	        }
     	}
-        // 4. Make a random move as a last resort
+        // 4. Make a random move as last resort
         System.out.println("random");
         return findRandomMove();
     }
@@ -219,13 +220,13 @@ class AIPlayer {
                 	int [][] tmp = gameLogic.getBoard();
                 	tmp[row][col] = player;
                 	gameLogic.setBoard(tmp);
-                    if (gameLogic.checkWin(player)) { // Check if this move wins the game
+                    if (gameLogic.checkWin(player)) { //
                     	tmp = gameLogic.getBoard();
                     	tmp[row][col] = 0;
                     	gameLogic.setBoard(tmp);
                         return new int[] {row, col};
                     }
-                	tmp[row][col] = 0;// Undo the move
+                	tmp[row][col] = 0;//Undo the move
                 	gameLogic.setBoard(tmp); 
                 }
             }
@@ -235,24 +236,24 @@ class AIPlayer {
 
 
     private int[] findProgressMove() {
-        int player = 2; // Assuming 2 represents AI
+        int player = 2; 
         for (int row = 0; row < gameLogic.getRows(); row++) {
             for (int col = 0; col < gameLogic.getCols(); col++) {
-                // Check if the cell is valid for a move
+                //check if the cell is valid for a move
                 if ((gameLogic.getBoard()[row][col] == 0) && gameLogic.getValidMoves()[row][col] == 1) {
-                    // Temporarily make a move
+                    //make a move temporarily
                     int [][] tempBoard = gameLogic.getBoard();
                     tempBoard[row][col] = player;
                     gameLogic.setBoard(tempBoard);
 
-                    // Check if this move creates a line of three
+                    //check if this move creates a line of three
                     if (isProgressMove(row, col, player)) {
-                        tempBoard[row][col] = 0; // Undo the move
+                        tempBoard[row][col] = 0; //undo
                         gameLogic.setBoard(tempBoard);
                         return new int[] {row, col};
                     }
 
-                    tempBoard[row][col] = 0; // Undo the move
+                    tempBoard[row][col] = 0; //undo
                     gameLogic.setBoard(tempBoard);
                 }
             }
@@ -261,7 +262,6 @@ class AIPlayer {
     }
 
     private boolean isProgressMove(int row, int col, int player) {
-        // Check horizontal, vertical, and diagonal lines for two chips and an empty space
         return checkLineForProgress(row, col, player, 1, 0) || // Horizontal
                checkLineForProgress(row, col, player, 0, 1) || // Vertical
                checkLineForProgress(row, col, player, 1, 1) || // Diagonal (down-right)
@@ -277,7 +277,7 @@ class AIPlayer {
                 if (gameLogic.getBoard()[newRow][newCol] == player) {
                     count++;
                 } else if (gameLogic.getBoard()[newRow][newCol] != 0) {
-                    return false; // The line is blocked by the opponent
+                    return false; //the line is blocked by the opponent
                 }
             }
         }
@@ -302,7 +302,7 @@ class AIPlayer {
     }
 
 	/**
-	 * @return the smart
+	 * @return smart value
 	 */
 	public Boolean getSmart() {
 		return smart;
