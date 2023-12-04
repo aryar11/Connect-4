@@ -8,6 +8,8 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import java.util.Collections;
+
 
 public class Main extends Application {
 
@@ -29,52 +31,95 @@ public class Main extends Application {
 
 class GameLogic {
     enum Player { HUMAN, AI }
-    private int[][] board;
-    private int[][] validMoves;
+    private ArrayList<ArrayList<Integer>> board;
+    private ArrayList<ArrayList<Integer>> validMoves;
     private int rows, cols;
 
     public GameLogic(int rows, int cols) {
         this.setRows(rows);
         this.setCols(cols);
-        this.setBoard(new int[rows][cols]);
-        this.setValidMoves (new int[rows][cols]);
+        this.initBoard();
+        this.setValidMoves (new ArrayList<>(Collections.nCopies(rows, new ArrayList<>(Collections.nCopies(cols, 0)))));
         this.updateValidMoves();
         reset();
     }
+    private void initBoard() {
+        // Initialize board with all zeros
+        this.board = new ArrayList<>();
+        for (int i = 0; i < rows; i++) {
+            ArrayList<Integer> row = new ArrayList<>(Collections.nCopies(cols, 0));
+            board.add(row);
+        }		
+	}
     
-    public void updateValidMoves() {
-    	this.setValidMoves (new int[rows][cols]);
+	public void updateValidMoves() {
+        // Initialize validMoves with all zeros
+        this.validMoves = new ArrayList<>();
+        for (int i = 0; i < rows; i++) {
+            ArrayList<Integer> row = new ArrayList<>(Collections.nCopies(cols, 0));
+            validMoves.add(row);
+        }
+
+        // Set the first empty cell in each column to 1 in validMoves
         for (int col = 0; col < cols; col++) {
-            for (int row = rows - 1; row >= 0; row--) { //starting from bottom row
-                if (this.board[row][col] == 0) { 
-                    this.validMoves[row][col] = 1;                    
-                    break; 
+            for (int row = rows - 1; row >= 0; row--) {
+                if (this.board.get(row).get(col) == 0) {
+                    this.validMoves.get(row).set(col, 1); 
+                    break; // Found the first empty cell in this column
                 }
             }
         }
-        // Print validMoves
-        /*System.out.println("Valid Moves:");
-        for (int[] row : validMoves) {
+        /*// Print validMoves
+        System.out.println("Valid Moves");
+        for (ArrayList<Integer> row : validMoves) {
             for (int move : row) {
                 System.out.print(move + " ");
             }
             System.out.println();
-        }*/
+        } */
     }
     
-    public int[] makeMove(int row, int col, Player player) {
-    	int[] values = new int[2];
-    	values[0] = -1;
-    	values[1] = col;
-        for (int row1 = getRows() - 1; row1 >= 0; row1--) {
-            if (getValidMoves()[row1][col] == 1) { // find first valid move from bottom
-                getBoard()[row1][col] = player == Player.HUMAN ? 1 : 2; // update the board with the move
-                updateValidMoves(); // update valid moves
-                values[0] = row1;
+    public int[] makeMove(int row1, int col, Player player) {
+        printBoard();
+        int[] values = new int[2];
+        values[0] = -1; // row index of the successful move
+        values[1] = col; //column of the move
+        /*i know that this is a workaround, but i realized that when i try to assign one cell value, it will change the whole column. 
+         * i tried added unique rows and adding them to the grid, but it still didn't fix the issue. i hope you understand why i had to cast it back and forth like this
+         */
+        // convert board to 2d array
+        int[][] boardArray = new int[rows][cols];
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                boardArray[i][j] = this.board.get(i).get(j);
+            }
+        }
+
+        //make  move
+        for (int row = 0; row < rows; row++) {
+            if (getValidMoves().get(row).get(col) == 1) {
+                boardArray[row][col] = player == Player.HUMAN ? 1 : 2;
+                values[0] = row;
                 break;
             }
         }
-        return values; // if no valid move found
+
+        // convert back to arrayList
+        ArrayList<ArrayList<Integer>> newBoard = new ArrayList<>();
+        for (int i = 0; i < boardArray.length; i++) {
+            ArrayList<Integer> rowList = new ArrayList<>();
+            for (int j = 0; j < boardArray[i].length; j++) {
+                rowList.add(boardArray[i][j]);
+            }
+            newBoard.add(rowList);
+        }
+
+        // update board
+        this.setBoard(newBoard);
+        updateValidMoves(); // Update valid moves
+
+        //printBoard();
+        return values; // Return the move coordinates, or [-1, col] if no valid move was found
     }
 
 
@@ -85,24 +130,23 @@ class GameLogic {
     private boolean checkRowsForWin(int player) {
         for (int row = 0; row < getRows(); row++) {
             for (int col = 0; col < getCols() - 3; col++) {
-                if (getBoard()[row][col] == player && 
-                    getBoard()[row][col + 1] == player && 
-                    getBoard()[row][col + 2] == player && 
-                    getBoard()[row][col + 3] == player) {
+                if (getBoard().get(row).get(col) == player && 
+                    getBoard().get(row).get(col + 1) == player && 
+                    getBoard().get(row).get(col + 2) == player && 
+                    getBoard().get(row).get(col + 3) == player) {
                     return true;
                 }
             }
         }
         return false;
     }
-
     private boolean checkColumnsForWin(int player) {
         for (int col = 0; col < getCols(); col++) {
             for (int row = 0; row < getRows() - 3; row++) {
-                if (getBoard()[row][col] == player && 
-                    getBoard()[row + 1][col] == player && 
-                    getBoard()[row + 2][col] == player && 
-                    getBoard()[row + 3][col] == player) {
+                if (getBoard().get(row).get(col) == player && 
+                    getBoard().get(row + 1).get(col) == player && 
+                    getBoard().get(row + 2).get(col) == player && 
+                    getBoard().get(row + 3).get(col) == player) {
                     return true;
                 }
             }
@@ -111,24 +155,24 @@ class GameLogic {
     }
 
     private boolean checkDiagonalsForWin(int player) {
-        //check left-to-right diagonals
+        // Check left-to-right diagonals
         for (int row = 0; row < getRows() - 3; row++) {
             for (int col = 0; col < getCols() - 3; col++) {
-                if (getBoard()[row][col] == player && 
-                    getBoard()[row + 1][col + 1] == player && 
-                    getBoard()[row + 2][col + 2] == player && 
-                    getBoard()[row + 3][col + 3] == player) {
+                if (getBoard().get(row).get(col) == player && 
+                    getBoard().get(row + 1).get(col + 1) == player && 
+                    getBoard().get(row + 2).get(col + 2) == player && 
+                    getBoard().get(row + 3).get(col + 3) == player) {
                     return true;
                 }
             }
         }
-        //check right-to-left diagonals
+        // Check right-to-left diagonals
         for (int row = 0; row < getRows() - 3; row++) {
             for (int col = 3; col < getCols(); col++) {
-                if (getBoard()[row][col] == player && 
-                    getBoard()[row + 1][col - 1] == player && 
-                    getBoard()[row + 2][col - 2] == player && 
-                    getBoard()[row + 3][col - 3] == player) {
+                if (getBoard().get(row).get(col) == player && 
+                    getBoard().get(row + 1).get(col - 1) == player && 
+                    getBoard().get(row + 2).get(col - 2) == player && 
+                    getBoard().get(row + 3).get(col - 3) == player) {
                     return true;
                 }
             }
@@ -137,8 +181,8 @@ class GameLogic {
     }
 
     public void reset() {
-        this.setBoard(new int[rows][cols]);
-        this.setValidMoves (new int[rows][cols]);
+        this.setBoard(new ArrayList<>(Collections.nCopies(rows, new ArrayList<>(Collections.nCopies(cols, 0)))));
+        this.setValidMoves (new ArrayList<>(Collections.nCopies(rows, new ArrayList<>(Collections.nCopies(cols, 0)))));
         updateValidMoves();
     }
 
@@ -150,27 +194,36 @@ class GameLogic {
 
 	public void setCols(int cols) {this.cols = cols;}
 
-	public int[][] getBoard() {return board;}
+	public ArrayList<ArrayList<Integer>> getBoard() {return board;}
 
-	public void setBoard(int[][] board) {this.board = board;}
+	public void setBoard(ArrayList<ArrayList<Integer>> b) {this.board = b;}
 
-	public int[][] getValidMoves() {return validMoves;}
+	public ArrayList<ArrayList<Integer>> getValidMoves() {return validMoves;}
 
-	public void setValidMoves(int[][] validMoves) {this.validMoves = validMoves;}
+	public void setValidMoves(ArrayList<ArrayList<Integer>> vM) {this.validMoves = vM;}
 	
 	/*
 	 * For debugging
 	 */
 	public void printValidMoves() {
 	    System.out.println("Valid Moves:");
-	    for (int[] row : validMoves) {
+	    for (ArrayList<Integer> row : validMoves) {
 	        for (int move : row) {
 	            System.out.print(move + " ");
 	        }
-	        System.out.println(); 
+	        System.out.println();
 	    }
 	}
 
+	public void printBoard() {
+	    System.out.println("Board:");
+	    for (ArrayList<Integer> row : board) {
+	        for (int move : row) {
+	            System.out.print(move + " ");
+	        }
+	        System.out.println();
+	    }
+	}
 }
 
 class AIPlayer {
@@ -215,18 +268,18 @@ class AIPlayer {
     private int[] findWinningMove(int player) {
         for (int row = 0; row < gameLogic.getRows(); row++) {
             for (int col = 0; col < gameLogic.getCols(); col++) {
-                if ((gameLogic.getBoard()[row][col] == 0) && gameLogic.getValidMoves()[row][col] == 1) { 
+                if ((gameLogic.getBoard().get(row).get(col) == 0) && gameLogic.getValidMoves().get(row).get(col) == 1) { 
                 	// Temporarily make a move
-                	int [][] tmp = gameLogic.getBoard();
-                	tmp[row][col] = player;
+                	ArrayList<ArrayList<Integer>> tmp = gameLogic.getBoard();
+                	tmp.get(row).set(col, player);
                 	gameLogic.setBoard(tmp);
                     if (gameLogic.checkWin(player)) { //
                     	tmp = gameLogic.getBoard();
-                    	tmp[row][col] = 0;
+                    	tmp.get(row).set(col, 0);
                     	gameLogic.setBoard(tmp);
                         return new int[] {row, col};
                     }
-                	tmp[row][col] = 0;//Undo the move
+                    tmp.get(row).set(col, 0);//Undo the move
                 	gameLogic.setBoard(tmp); 
                 }
             }
@@ -240,20 +293,20 @@ class AIPlayer {
         for (int row = 0; row < gameLogic.getRows(); row++) {
             for (int col = 0; col < gameLogic.getCols(); col++) {
                 //check if the cell is valid for a move
-                if ((gameLogic.getBoard()[row][col] == 0) && gameLogic.getValidMoves()[row][col] == 1) {
+                if ((gameLogic.getBoard().get(row).get(col)  == 0) && gameLogic.getValidMoves().get(row).get(col) == 1) {
                     //make a move temporarily
-                    int [][] tempBoard = gameLogic.getBoard();
-                    tempBoard[row][col] = player;
+                	ArrayList<ArrayList<Integer>> tempBoard = gameLogic.getBoard();
+                	tempBoard.get(row).set(col, player);
                     gameLogic.setBoard(tempBoard);
 
                     //check if this move creates a line of three
                     if (isProgressMove(row, col, player)) {
-                        tempBoard[row][col] = 0; //undo
+                    	tempBoard.get(row).set(col, 0);  //undo
                         gameLogic.setBoard(tempBoard);
                         return new int[] {row, col};
                     }
 
-                    tempBoard[row][col] = 0; //undo
+                    tempBoard.get(row).set(col, 0); //undo
                     gameLogic.setBoard(tempBoard);
                 }
             }
@@ -274,9 +327,9 @@ class AIPlayer {
             int newRow = row + i * dRow;
             int newCol = col + i * dCol;
             if (newRow >= 0 && newRow < gameLogic.getRows() && newCol >= 0 && newCol < gameLogic.getCols()) {
-                if (gameLogic.getBoard()[newRow][newCol] == player) {
+                if (gameLogic.getBoard().get(newRow).get(newCol)  == player) {
                     count++;
-                } else if (gameLogic.getBoard()[newRow][newCol] != 0) {
+                } else if (gameLogic.getBoard().get(newRow).get(newCol)  != 0) {
                     return false; //the line is blocked by the opponent
                 }
             }
@@ -289,7 +342,7 @@ class AIPlayer {
         List<int[]> emptyCells = new ArrayList<>();
         for (int row = 0; row < gameLogic.getRows(); row++) {
             for (int col = 0; col < gameLogic.getCols(); col++) {
-                if ((gameLogic.getBoard()[row][col] == 0) && gameLogic.getValidMoves()[row][col] == 1) {
+                if ((gameLogic.getBoard().get(row).get(col) == 0) && gameLogic.getValidMoves().get(row).get(col) == 1) {
                     emptyCells.add(new int[] {row, col});
                 }
             }
@@ -315,4 +368,3 @@ class AIPlayer {
 		this.smart = smart;
 	}
 }
-

@@ -12,6 +12,10 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.scene.control.Label;
 import javafx.util.Duration;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
 
 public class Connect4Controller {
 
@@ -35,6 +39,7 @@ public class Connect4Controller {
         aiPlayer.setSmart(true);
         animateTitle();
         setupBoard();
+        clearMovesFile();
     }
 
     private void setupBoard() {
@@ -58,10 +63,16 @@ public class Connect4Controller {
     private void makeMove(int row, int col) {
         int[] values = gameLogic.makeMove(row, col, GameLogic.Player.HUMAN);
         if(values[0] != -1) { //if row value is not -1
-            updateCircle(values[0] /*row*/, values[1] /*column*/, Color.BLUE); // Update circle for human player
+            updateCircle(values[0] /*row*/, values[1] /*column*/, Color.BLUE); //update circle for human player
+            writeMoveToFile("Human", 1);
             gameLogic.updateValidMoves();
             if(gameLogic.checkWin(1)) {
                 showAlert("Congratulations!", "You win!");
+                try (BufferedWriter writer = new BufferedWriter(new FileWriter("moves.txt", true))) {
+                    writer.write("You Won!");
+                }catch (IOException e) {
+                    System.err.println("Error writing to file: " + e.getMessage());
+                }
                 return; 
             }
 
@@ -69,15 +80,44 @@ public class Connect4Controller {
             int[] aiMove = aiPlayer.makeMove();
             if(aiMove != null) {
                 int [] AI_Values = gameLogic.makeMove(aiMove[0], aiMove[1], GameLogic.Player.AI);
-                updateCircle(aiMove[0], aiMove[1], Color.RED); // Update circle for AI player
+                updateCircle(aiMove[0], aiMove[1], Color.RED); //Update circle for AI player
                 gameLogic.updateValidMoves();
+                writeMoveToFile("AI", 2);
                 if(gameLogic.checkWin(2)) {
                     showAlert("Game Over", "You lose :(");
+                    try (BufferedWriter writer = new BufferedWriter(new FileWriter("moves.txt", true))) {
+                        writer.write("You Lost :(");
+                    }catch (IOException e) {
+                        System.err.println("Error writing to file: " + e.getMessage());
+                    }
                     return; 
                 }
-            } else {
-                // Handle case where AI cannot make a move
+            } 
+        }
+    }
+    
+    private void writeMoveToFile(String player, int i) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("moves.txt", true))) {
+            writer.write(player + " (" + i + ")" + " played:\n");
+
+            ArrayList<ArrayList<Integer>> board = gameLogic.getBoard();
+            for (ArrayList<Integer> row : board) {
+                for (int cell : row) {
+                    writer.write(cell + " ");
+                }
+                writer.write("\n"); 
             }
+            writer.write("\n"); 
+        } catch (IOException e) {
+            System.err.println("Error writing to file: " + e.getMessage());
+        }
+    }
+
+    
+    private void clearMovesFile() {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("moves.txt"))) {} 
+        catch (IOException e) {
+            System.err.println("Error clearing the file: " + e.getMessage());
         }
     }
 
