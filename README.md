@@ -34,3 +34,7 @@ To run the project:
 
 1. Ensure JavaFX SDK is properly set up in your IDE
 2. Compile and run `Main.java` to launch the Connect 4 GUI.
+
+## Sample Image from JavaFX Game
+
+![Screenshot of Connect 4](exampleGame.png)
